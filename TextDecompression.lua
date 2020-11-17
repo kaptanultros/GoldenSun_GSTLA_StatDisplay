@@ -1,5 +1,13 @@
 readWord = memory.read_u16_le
 readDWord = memory.read_u32_le
+local ROM = ""
+charTablePointerAddress = 0
+dataPointerAddress = 0
+for i=0,11 do
+    ROM = ROM..string.char(memory.readbyte(0x080000A0+i))
+end
+if ROM == "Golden_Sun_A" then charTablePointerAddress = 0x0801556C dataPointerAddress = 0x080155CC end
+if ROM == "GOLDEN_SUN_B" then charTablePointerAddress = 0x08038578 dataPointerAddress = 0x080385DC end
 
 function getNextBit(number,bitAddr)
     b = bit.band(number,1)
@@ -14,8 +22,8 @@ end
 
 function decompressText(textIndex)
 
-    local charTablePointer = readDWord(0x08038578) -- 08060C30 pointer to charDataAddr and treeOffsetTableAddr
-    local dataPointer = readDWord(0x080385DC) -- 080A9F54 table of addresses related to compressed data
+    local charTablePointer = readDWord(charTablePointerAddress) -- 08060C30 pointer to charDataAddr and treeOffsetTableAddr
+    local dataPointer = readDWord(dataPointerAddress) -- 080A9F54 table of addresses related to compressed data
     local txtDataPntrs = dataPointer + bit.lshift(bit.rshift(textIndex,8),3) -- base compressed data address, address of table of text lengths
     local baseAddr = readDWord(txtDataPntrs)
     local txtLenAddr = readDWord(txtDataPntrs + 4)
