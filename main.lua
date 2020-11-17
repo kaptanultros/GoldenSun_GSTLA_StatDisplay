@@ -1,12 +1,14 @@
 require "TextDecompression"
 local ROM = ""
 local offset = 0
+local classNameOffset = 0
+local enemyBaseAddress = 0
 local screen = 0
 for i=0,11 do
     ROM = ROM..string.char(memory.readbyte(0x080000A0+i))
 end
-if ROM == "GOLDEN_SUN_B" then offset = 0x20 screen = 280 end
-if ROM == "Golden_Sun_A" then screen = 140 end
+if ROM == "Golden_Sun_A" then screen = 140  classNameOffset = 1857 enemybaseAddress = 0x02030878 end
+if ROM == "GOLDEN_SUN_B" then offset = 0x20 screen = 280 classNameOffset = 2915 enemybaseAddress = 0x020308C8 end
 
 pcRamBase=0x02000500+offset
 pcOrderBase=0x02000438+offset
@@ -92,19 +94,13 @@ function drawStatsByID(x, y, char_num) --, name)
     rText(x+33+40,y+30, mr1(addr+0x11A), c1, c2)
     rText(x+33+57,y+30, mr1(addr+0x11B), c1, c2)
 end
-classArray = {"NPC","Squire","Knight","Gallant","Lord","Slayer","?","?","?","?","Guard","Soldier","Warrior","Champion","Hero","?","?","?","?","?","Wind Seer","Magician","Mage","Magister","Sorcerer","?","?","?","?","?","Water Seer","Scribe","Cleric","Paragon","Angel","?","?","?","?","?","Swordsman","Defender","Cavalier","Guardian","Protector","?","?","?","?","?","Swordsman","Defender","Cavalier","Luminier","Radiant","?","?","?","?","?","Dragoon","Templar","Paladin","?","?","?","?","?","?","?","Apprentice","Illusionist","Enchanter","Conjurer","War Adept","?","?","?","?","?","Page","Illusionist","Enchanter","Conjurer","War Adept","?","?","?","?","?","Ninja","Disciple","Master","?","?","?","?","?","?","?","Seer","Diviner","Shaman","Druid","Oracle","?","?","?","?","?","Seer","Diviner","Shaman","Druid","Oracle","?","?","?","?","?","Medium","Conjurer","Dark Mage","?","?","?","?","?","?","?","Pilgrim","Wanderer","Ascetic","Water Monk","Guru","?","?","?","?","?","Pilgrim","Wanderer","Ascetic","Fire Monk","Guru","?","?","?","?","?","Ranger","Bard","Warlock","?","?","?","?","?","?","?","Brute","Ruffian","Savage","Barbarian","Berserker","Chaos Lord","?","?","?","?","Samurai","Ronin","?","?","?","?","?","?","?","?","Hermit","Elder","Scholar","Savant","Sage","Wizard","?","?","?","?","White Mage","Pure Mage","?","?","?","?","?","?","?","?","?","?","Flame User"}
+
 usedClassNames = {}
 usedClassIDs = {}
 function getClassByID(classID, char_num)
-	if usedClassNames[char_num] == nil or usedClassIDs[char_num] ~= classID then
+	if usedClassIDs[char_num] ~= classID then
 		usedClassIDs[char_num] = classID
-		if ROM == "Golden_Sun_A" then
-			usedClassNames[char_num] = classArray[classID+1]
-			-- decompress blows up, just use the standard array
-			--usedClassNames[char_num] = decompressText(1857+classID)
-		else
-			usedClassNames[char_num] = decompressText(2915+classID)
-		end	
+		usedClassNames[char_num] = decompressText(classNameOffset+classID)
 	end
 	return usedClassNames[char_num]
 end
@@ -136,14 +132,9 @@ function drawEnemyData()
 	--020308C8 = Enemy data, second at 02030A14 (+14C per subsequent)
 	local x = 0
 	local y = 160
-	local addr = 0x020308C8
-	-- Adjust for GS1
-	if ROM == "Golden_Sun_A" then
-		addr = 0x02030878
-	end
 	local enemyCount = 0
 	for enemyLoop=0,5 do
-		local enemyAddr = addr + 0x14C*enemyLoop
+		local enemyAddr = enemybaseAddress + 0x14C*enemyLoop
 		local name = ""
 		for nameLimit=0x0,0xD do
 			if mr1(enemyAddr+nameLimit) == 0 then
@@ -154,6 +145,7 @@ function drawEnemyData()
 		-- Only keep going if this enemy is alive
 		if mr2(enemyAddr+0x38) > 0 then
 			enemyCount = enemyCount + 1
+			-- GS1 doesn't go wide enough for more than 4 enemies
 			if enemyCount == 5 then
 				if ROM == "Golden_Sun_A" then
 					rText(x,y,  " Only", c1, c2)
