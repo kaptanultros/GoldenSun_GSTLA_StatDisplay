@@ -145,7 +145,7 @@ function drawEnemyData()
 		-- Only keep going if this enemy is alive
 		if mr2(enemyAddr+0x38) > 0 then
 			enemyCount = enemyCount + 1
-			-- GS1 doesn't go wide enough for more than 4 enemies
+			-- GS1 party screen doesn't go wide enough for more than 4 enemies
 			if enemyCount == 5 then
 				if ROM == "Golden_Sun_A" then
 					rText(x,y,  " Only", c1, c2)
@@ -166,13 +166,13 @@ function drawEnemyData()
 			rText(x,y+28, "AG:" .. mr2(enemyAddr+0x0C) .. " LU:" .. mr1(enemyAddr+0x0E), c1, c2)
 			rText(x+56,y, "Pow/Res", c1, c2)
 			-- Check which elemental resist is lowest, put a gold bar behind it, to highlight djinn-kill element
-			if enemyCount == 2 then
-			progressbar_lowestResist(x+55, y+7*checkLowestResist(mr2(enemyAddr+0x16), mr2(enemyAddr+0x1A), mr2(enemyAddr+0x1E), mr2(enemyAddr+0x22)))
-			elseif enemyCount == 4 then
-			progressbar_lowestResist(x+55, y+7*checkLowestResist(mr2(enemyAddr+0x16), mr2(enemyAddr+0x1A), mr2(enemyAddr+0x1E), mr2(enemyAddr+0x22)))
+			if enemycount == 2 or enemycount == 4 then
+				resistBarWidth = 55
 			else
-			progressbar_lowestResist(x+56, y+7*checkLowestResist(mr2(enemyAddr+0x16), mr2(enemyAddr+0x1A), mr2(enemyAddr+0x1E), mr2(enemyAddr+0x22)))
+				resistBarWidth = 56
 			end
+--			resistBarWidth = 55 + (enemycount % 2) -- similar to x-position, even counts need to be shorter
+			progressbar_lowestResist(x+resistBarWidth, y+7*checkLowestResist(mr2(enemyAddr+0x16), mr2(enemyAddr+0x1A), mr2(enemyAddr+0x1E), mr2(enemyAddr+0x22)))
 			rText(x+56,y+7, mr2(enemyAddr+0x14) .. "/" .. mr2(enemyAddr+0x16), 0xFFF87000, c2)
 			rText(x+56,y+14, mr2(enemyAddr+0x18) .. "/" .. mr2(enemyAddr+0x1A), 0xFF00F8F8, c2)
 			rText(x+56,y+21, mr2(enemyAddr+0x1C) .. "/" .. mr2(enemyAddr+0x1E), 0xFFFF0000, c2)
@@ -214,6 +214,7 @@ while true do
             pcslot = pcslot + 1
         end
     end
+	
 
 	-- Get enemy data
 	drawEnemyData()
